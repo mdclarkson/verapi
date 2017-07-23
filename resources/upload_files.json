@@ -1,0 +1,24 @@
+{
+  "filesData": {
+    "bucket_name": "bucket-veracode-files",
+    "veracode_appid": 325008,
+    "veracode_sandboxid": 385022,
+    "veracode_option": "update/create",
+    "data": [
+      {
+        "directory": "serverless/nwApiGateway/prod/",
+        "filename": "nwApiGateway.zip"
+      },
+      {
+        "directory":"serverless/nwClassicIntStreams/prod/",
+        "filename": "nwClassicIntStreams.zip"
+      },
+      {
+        "directory":"serverless/nwClassicIntegration/prod/",
+        "filename": "nwClassicIntegration.zip"
+      }
+    ]
+  }
+}
+
+
