@@ -1,5 +1,5 @@
 __author__ = "Clyde Fondop"
-#!/usr/local/bin/python3 -u
+#!/usr/local/bin/python
 # title           : Lambda env vars
 # description     : VeraCode API Upload Files and submission
 #                   AWS Lambda Role Name:
@@ -56,7 +56,7 @@ class ManageLambdaFunction:
 
         get_json = {}
 
-        f = open("resources/upload_files.json", "r")
+        f = open("../resources/upload_files.json", "r")
 
         try:
             get_json = json.loads(f.read())

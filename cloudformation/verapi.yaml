@@ -1,0 +1,178 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description:  AWS CloudFormation for veracodeAPI
+
+Parameters:
+  S3Bucket:
+    Description: The name of the Amazon Simple Storage Service (Amazon S3) bucket
+      that contains the source code of your Lambda function. The S3 bucket must be
+      in the same region in which the stack is created.
+    Type: String
+    Default: nw-verapi-scan
+
+  S3BucketFilesToScan:
+    Description: The name of the Amazon Simple Storage Service where the files are stored for Veracode Scanning
+    Type: String
+    Default: nw-sls-deploy-854045450972-test
+
+  S3Key:
+    Description: The location and name of your packaged source code (.zip file).
+    Type: String
+    Default: nw-verapi.zip
+
+  UserName:
+    Description: User allowed to sign.
+    Type: String
+    Default: nw-verapi
+
+Resources:
+
+  CFNGroup:
+    Type: "AWS::IAM::Group"
+    Properties:
+      GroupName: "new-devsecops"
+
+  CFNUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName:
+        Ref: UserName
+      Groups:
+       - new-devsecops
+
+  VERAPIRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: InvokePolicy
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource:
+              - arn:aws:logs:*:*:*
+
+          - Effect: Allow
+            Action:
+            - s3:ListBucket
+            - s3:GetObject
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  -
+                    Ref: S3Bucket
+
+  CFNUserPolicies:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: nw-devsecops-policy
+      PolicyDocument:
+        Statement:
+        - Effect: Allow
+          Action:
+            - execute-api:Invoke*
+          Resource:  arn:aws:execute-api:*:*:*/*/POST/api/verapi/scan
+      Roles:
+        - Ref: "VERAPIRole"
+      Groups:
+        - new-devsecops
+
+  VerapiKMS:
+    Type: "AWS::KMS::Key"
+    Properties:
+      Description: "This KMS key will be used for devsecops operation"
+      KeyPolicy:
+        Version: "2012-10-17"
+        Id: "nw-devsecops-kms"
+        Statement:
+          -
+            Sid: "Allow administration of the key"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+
+            Action:
+              - "kms:Create*"
+              - "kms:Describe*"
+              - "kms:Enable*"
+              - "kms:List*"
+              - "kms:Put*"
+              - "kms:Update*"
+              - "kms:Revoke*"
+              - "kms:Disable*"
+              - "kms:Get*"
+              - "kms:Delete*"
+              - "kms:ScheduleKeyDeletion"
+              - "kms:CancelKeyDeletion"
+            Resource: "*"
+          -
+            Sid: "Allow use of the key"
+            Effect: "Allow"
+            Principal:
+              AWS: "*"
+
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:DescribeKey"
+            Resource: "*"
+  VERAPI:
+    Type: AWS::Lambda::Function
+    Properties:
+      Handler: nw-verapi.lambda_function
+      Role:
+        Fn::GetAtt:
+        - VERAPIRole
+        - Arn
+      Code:
+        S3Bucket:
+          Ref: S3Bucket
+        S3Key:
+          Ref: S3Key
+      Runtime: python2.7
+      Timeout: '60'
+      TracingConfig:
+        Mode: "Active"
+      Environment:
+        Variables:
+          username: "User Encrypted KMS"
+          password: "Pass Encrypted KMS"
+      KmsKeyArn:
+        Fn::GetAtt:
+        - VerapiKMS
+        - Arn
+
+  BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket:
+        Ref: S3BucketFilesToScan
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: "Allow"
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  -
+                    Ref: S3BucketFilesToScan

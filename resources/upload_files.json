@@ -16,6 +16,26 @@
       {
         "directory":"serverless/nwClassicIntegration/prod/",
         "filename": "nwClassicIntegration.zip"
+      },
+      {
+        "directory":"serverless/nwIAM/prod/",
+        "filename": "nwIAM.zip"
+      },
+      {
+        "directory":"serverless/nwInfra/prod/",
+        "filename": "nwInfra.zip"
+      },
+      {
+        "directory":"serverless/nwVault/prod/",
+        "filename": "nwVault.zip"
+      },
+      {
+        "directory":"serverless/nwWatchlist/prod/",
+        "filename": "nwWatchlist.zip"
+      },
+      {
+        "directory":"serverless/nwWatchlistStreams/prod/",
+        "filename": "nwWatchlistStreams.zip"
       }
     ]
   }
