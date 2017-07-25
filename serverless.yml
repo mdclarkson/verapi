@@ -1,0 +1,34 @@
+
+service: aws-python # NOTE: update this with your service name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+# you can overwrite defaults here
+stage: dev
+region: us-east-2
+
+provider:
+  name: aws
+  runtime: python2.7
+
+functions:
+  nwLambdaVerapi:
+    handler: handler.lambda_function
+    name: ${self:provider.stage}-nw-verapi
+    description: Veracode API
+    runtime: python2.7
+    memorySize: 512
+    timeout: 30
+    events:
+      - http:
+          path: ${self:provider.stage}/nwVerapi
+          method: post
+
+resources:
+  Resources:
+    ApiGatewayMethodHelloGet:
+      Properties:
+        AuthorizationType: AWS_IAM
+
