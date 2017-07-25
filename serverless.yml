@@ -1,34 +1,47 @@
 
-service: aws-python # NOTE: update this with your service name
+service: nwVerapi # NOTE: update this with your service name
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
 # you can overwrite defaults here
-stage: dev
-region: us-east-2
+stage: ${self:provider.stage}
+region: ${self:provider.region}
 
 provider:
   name: aws
   runtime: python2.7
 
+plugins:
+  - serverless-crypt
+
+custom:
+  cryptKeyId: ${env:AWS_KMS_KEYID}
+
 functions:
   nwLambdaVerapi:
     handler: handler.lambda_function
-    name: ${self:provider.stage}-nw-verapi
-    description: Veracode API
+    name: nwVerapi
+    description: Veracode API For upload and scan
     runtime: python2.7
     memorySize: 512
     timeout: 30
+
+    environment:
+      username: ${self:custom.cryptKeyId.username}
+      password: ${self:custom.cryptKeyId.password}
     events:
       - http:
-          path: ${self:provider.stage}/nwVerapi
+          path: api/nwVerapi
           method: post
+          integration: lambda
 
-resources:
-  Resources:
-    ApiGatewayMethodHelloGet:
-      Properties:
-        AuthorizationType: AWS_IAM
+    resources:
+      Resources:
+        ApiGatewayMethodnwVerapiPost:
+           Properties:
+             AuthorizationType: AWS_IAM
+
+
 

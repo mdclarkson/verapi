@@ -15,6 +15,7 @@ You need to post a JSON by using AWS signing v4 available [here](http://docs.aws
 - Specify the veracode_appid & veracode_sandboxid.
 - Specify each file within the bucket.
 
+KMS encrypted for API [here](https://github.com/marcy-terui/serverless-crypt)
 
 Here is an example of JSON to POST to Veracode API
 

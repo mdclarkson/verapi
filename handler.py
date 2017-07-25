@@ -117,8 +117,8 @@ class veracodeAPI:
     def __init__(self):
         self.message = {}
         self.credential = {}
-        self.credential["username"] = os.environ.get("VERACODE_USERNAME")
-        self.credential["password"] = os.environ.get("VERACODE_PASSWORD")
+        self.credential["username"] = self.decrypt_kms_keys("username")
+        self.credential["password"] = self.decrypt_kms_keys("password")
 
 
     # Begin the scan with Veracode
@@ -172,7 +172,7 @@ class veracodeAPI:
 
 
     # Decrypt environment variable
-    def decrypt_kms_keys(self, kms_keyid, encrypted_string):
+    def decrypt_kms_keys(self, encrypted_string):
         plaintext = ""
 
         meta = kms.decrypt(CiphertextBlob=encrypted_string)
