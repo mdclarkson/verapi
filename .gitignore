@@ -20,6 +20,6 @@ venv/*
 *.gitignore
 
 # Serverless directories
-.serverless
-.serverless-secret.json
+*.serverless
+*.serverless-secret.json
 node_modules/*
