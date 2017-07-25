@@ -56,10 +56,8 @@ class ManageLambdaFunction:
 
         get_json = {}
 
-        f = open("resources/upload_files.json", "r")
-
         try:
-            get_json = json.loads(f.read())
+            get_json = json.loads(event)
             checkJson = True
         except KeyError:
             self.response["body"] = self.bad_http_requests
@@ -119,6 +117,8 @@ class veracodeAPI:
         self.credential = {}
         self.credential["username"] = self.decrypt_kms_keys("USERNAME")
         self.credential["password"] = self.decrypt_kms_keys("PASSWORD")
+        # self.credential["username"] = os.environ.get("USERNAME")
+        # self.credential["password"] = os.environ.get("PASSWORD")
 
 
     # Begin the scan with Veracode
@@ -164,6 +164,12 @@ class veracodeAPI:
             bar.show(monitor.bytes_read)
         return callback
 
+    # Get scans results
+    def get_prescan_results(self, payload):
+        """Gets the results of a prescan."""
+        api_endpoint = "getprescanresults.do"
+        return self.api_submit(api_endpoint, payload)
+
     # Submit information to Veracode
     def api_submit(self, api_endpoint, payload=None, files=None):
         r = requests.post(VERACODE_API_URL + api_endpoint, params=payload, files=files,
@@ -181,6 +187,7 @@ class veracodeAPI:
         return plaintext
 
 
+
 # Open XML and Match XML text
 def match_string_text(string, root):
     return re.match(string, root.text)
@@ -190,20 +197,26 @@ def match_string_tag(string, root):
     return re.match(string, root.tag)
 
 # Function which will call Veracode API
-def lambda_function(context, event):
+def lambda_function_postfiles(context, event):
     MyMLF = ManageLambdaFunction()
     MyVAPI = veracodeAPI()
 
-    # check http response
-    func_lambda_variables = MyMLF.check_http_response(event)
+    # f = open("resources/upload_files.json", "r")
 
-    filesData = func_lambda_variables["filesData"]
+    # check http response
+    try:
+        http_param = MyMLF.check_http_response(event["body"])
+    except KeyError:
+        print("this need to be send via HTTP request")
+        exit(1)
+
+    filesData = http_param["filesData"]
 
     MyMLF.sandboxID = filesData["veracode_sandboxid"]
     MyMLF.appID = filesData["veracode_appid"]
     MyMLF.bucket_name = filesData["bucket_name"]
 
-    if func_lambda_variables:
+    if filesData:
 
         #  Call Upload API to Veracode with credential, filename and application information
         statusCode = MyMLF.multi_upload_files(filesData["data"])
@@ -231,7 +244,48 @@ def lambda_function(context, event):
 
     return response
 
+# Call Veracode Function which will get results
+def lambda_function_getresults(context, event):
+    MyMLF = ManageLambdaFunction()
+    MyVAPI = veracodeAPI()
+    scan_results = []
+    veracode_attributs = {}
+
+    # check http response
+    try:
+        http_param = MyMLF.check_http_response(event["pathParameters"])
+    except KeyError:
+        print("this need to be send via HTTP request")
+        exit(1)
+
+    # Check appid
+    if "appid" in http_param:
+        appid = http_param['appid']
+
+    # Call function to check the results
+    results = MyVAPI.get_prescan_results({'app_id':"{}".format(appid)})
+
+    #### Check results #####
+    root = ET.fromstring(results.text)
+    for child in root:
+        if  "status" in child.attrib:
+
+            veracode_attributs = {
+                "name": child.attrib["name"],
+                "platform": child.attrib["platform"],
+                "status": child.attrib["status"]
+            }
+
+            scan_results.append(veracode_attributs)
+
+    MyMLF.response["body"] = scan_results
+    response = MyMLF.get_response()
+
+    return response
+
+
+# Test case
 if __name__ == "__main__":
     context = event = {}
-    lambda_function(context, event)
+    lambda_function_getresults(context, event)
 

@@ -1,6 +1,9 @@
 # Properties for the lambda function
 aws-lambda-role: "arn:aws:iam::854045450972:role/nw-Verapi"
 use_iam_auth: true
+aws-lambda-sg: "sg-2bf12657"
 aws-lambda-subnet1: "subnet-2aa9d363"
 aws-lambda-subnet2: "subnet-2d63e800"
 aws-region: "us-east-1"
+username: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgH36Cx2fbYen2wXWmlNAQbxAAAAaTBnBgkqhkiG9w0BBwagWjBYAgEAMFMGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMDNa5B4gBthaajnHeAgEQgCbr8fLuEAkpgGDuv1PIUX+saOS1LHfBTs5ILqFXGGS7q6cSKwPfLQ==
+password: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgH4ilW3EeyXWrZCURtH5bTEAAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMMK0LxQtdKTMPs1DRAgEQgCvsJ0RAtCnBs/RGjOIQKTCCik2rVBd4sFP6wqdZE9D1aVnTwuqSoBuF5XKW

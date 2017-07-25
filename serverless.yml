@@ -17,17 +17,16 @@ custom:
 
 # Function Lambda for veracode
 functions:
-  nwLambdaVerapi:
-    handler: handler.lambda_function
-    name: nwVerapi
+  nwVerapiPost:
+    handler: handler.lambda_function_postfiles
+    name: nwVerapi-postFiles
     description: Veracode API For upload and scan
     runtime: python2.7
     memorySize: 512
     timeout: 30
     environment:
-      USERNAME: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgH36Cx2fbYen2wXWmlNAQbxAAAAaTBnBgkqhkiG9w0BBwagWjBYAgEAMFMGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMDNa5B4gBthaajnHeAgEQgCbr8fLuEAkpgGDuv1PIUX+saOS1LHfBTs5ILqFXGGS7q6cSKwPfLQ==
-      PASSWORD: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgH4ilW3EeyXWrZCURtH5bTEAAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMMK0LxQtdKTMPs1DRAgEQgCvsJ0RAtCnBs/RGjOIQKTCCik2rVBd4sFP6wqdZE9D1aVnTwuqSoBuF5XKW
-    role: ${file(properties.yml):aws-lambda-role}
+      USERNAME: ${file(properties.yml):username}
+      PASSWORD: ${file(properties.yml):password}
     region: ${file(properties.yml):aws-region}
     vpc:
       securityGroupIds:
@@ -38,11 +37,33 @@ functions:
 
     events:
       - http:
-          path: api/nwVerapi
+          path: api/nwVerapi/sendFiles
           method: post
           integration: lambda
-          authorizer: "${self:custom.iamAuthorizer}"
+#          authorizer:
+#            type: aws_iam
 
-
-
-
+  nwVerapiGet:
+    handler: handler.lambda_function_getresults
+    name: nwVerapi-getResults
+    description: Veracode API Get results
+    runtime: python2.7
+    memorySize: 512
+    timeout: 30
+    environment:
+      USERNAME: ${file(properties.yml):username}
+      PASSWORD: ${file(properties.yml):password}
+    region: ${file(properties.yml):aws-region}
+    vpc:
+      securityGroupIds:
+        - ${file(properties.yml):aws-lambda-sg}
+      subnetIds:
+        - ${file(properties.yml):aws-lambda-subnet1}
+        - ${file(properties.yml):aws-lambda-subnet2}
+    events:
+      - http:
+          path: api/nwVerapi/getResults/{appid}
+          method: get
+          integration: lambda
+#          authorizer:
+#            type: aws_iam

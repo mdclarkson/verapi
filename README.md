@@ -17,7 +17,22 @@ You need to post a JSON by using AWS signing v4 available [here](http://docs.aws
 
 KMS encrypted for API [here](https://github.com/marcy-terui/serverless-crypt)
 
-Here is an example of JSON to POST to Veracode API
+### USAGE
+
+To post files to scan you need to perform this command:
+
+```
+curl --header "Content-Type: application/json" -X POST  -d @resources/test_upload.json
+```
+
+To get the results you have to perform this command:
+
+```
+curl --header "Content-Type: application/json" -X GET
+```
+
+
+### POST API to Veracode
 
     {
       "filesData": {
@@ -61,4 +76,24 @@ Here is an example of JSON to POST to Veracode API
       }
     }
 
-
+## GET results from Veracode
+```
+{
+   "body":[
+      {
+         "status":"OK",
+         "platform":"JAVASCRIPT / JavaScript / JAVASCRIPT_5_1",
+         "name":"JS files within nw-iam-master.zip"
+      },
+      {
+         "status":"OK",
+         "platform":"JVM / Java J2SE 6 / JAVAC_5",
+         "name":"gradle-wrapper.jar"
+      }
+   ],
+   "headers":{
+      "Access-Control-Allow-Origin":"*"
+   },
+   "statusCode":200
+}
+```
