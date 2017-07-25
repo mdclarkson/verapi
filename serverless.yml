@@ -19,6 +19,7 @@ plugins:
 custom:
   cryptKeyId: ${env:AWS_KMS_KEYID}
 
+# Function Lambda for veracode
 functions:
   nwLambdaVerapi:
     handler: handler.lambda_function
