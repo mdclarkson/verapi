@@ -16,7 +16,10 @@ var/
 .installed.cfg
 *.egg
 venv/*
-node_modules/*
+*.pyc
+*.gitignore
 
 # Serverless directories
 .serverless
+.serverless-secret.json
+node_modules/*
