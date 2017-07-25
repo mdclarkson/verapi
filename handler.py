@@ -117,8 +117,8 @@ class veracodeAPI:
     def __init__(self):
         self.message = {}
         self.credential = {}
-        self.credential["username"] = self.decrypt_kms_keys("username")
-        self.credential["password"] = self.decrypt_kms_keys("password")
+        self.credential["username"] = self.decrypt_kms_keys("USERNAME")
+        self.credential["password"] = self.decrypt_kms_keys("PASSWORD")
 
 
     # Begin the scan with Veracode

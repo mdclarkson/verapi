@@ -1,9 +1,5 @@
 
-service: nwVerapi # NOTE: update this with your service name
-
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
-# frameworkVersion: "=X.X.X"
+service: nwVerapi
 
 # you can overwrite defaults here
 stage: ${self:provider.stage}
@@ -28,21 +24,25 @@ functions:
     runtime: python2.7
     memorySize: 512
     timeout: 30
-
     environment:
-      username: ${self:custom.cryptKeyId.username}
-      password: ${self:custom.cryptKeyId.password}
+      USERNAME: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgH36Cx2fbYen2wXWmlNAQbxAAAAaTBnBgkqhkiG9w0BBwagWjBYAgEAMFMGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMDNa5B4gBthaajnHeAgEQgCbr8fLuEAkpgGDuv1PIUX+saOS1LHfBTs5ILqFXGGS7q6cSKwPfLQ==
+      PASSWORD: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgH4ilW3EeyXWrZCURtH5bTEAAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMMK0LxQtdKTMPs1DRAgEQgCvsJ0RAtCnBs/RGjOIQKTCCik2rVBd4sFP6wqdZE9D1aVnTwuqSoBuF5XKW
+    role: ${file(properties.yml):aws-lambda-role}
+    region: ${file(properties.yml):aws-region}
+    vpc:
+      securityGroupIds:
+        - ${file(properties.yml):aws-lambda-sg}
+      subnetIds:
+        - ${file(properties.yml):aws-lambda-subnet1}
+        - ${file(properties.yml):aws-lambda-subnet2}
+
     events:
       - http:
           path: api/nwVerapi
           method: post
           integration: lambda
+          authorizer: "${self:custom.iamAuthorizer}"
 
-    resources:
-      Resources:
-        ApiGatewayMethodnwVerapiPost:
-           Properties:
-             AuthorizationType: AWS_IAM
 
 
 

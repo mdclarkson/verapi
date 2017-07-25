@@ -1,0 +1,6 @@
+# Properties for the lambda function
+aws-lambda-role: "arn:aws:iam::854045450972:role/nw-Verapi"
+use_iam_auth: true
+aws-lambda-subnet1: "subnet-2aa9d363"
+aws-lambda-subnet2: "subnet-2d63e800"
+aws-region: "us-east-1"
