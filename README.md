@@ -40,22 +40,22 @@ curl --header "Content-Type: application/json" -X GET https://rxowq2u7oj.execute
 
 ### POST API to Veracode
 ```
-   {
+ {
       "filesData": {
-        "bucket_name": "S3nw-sls-deploy-668385047392-prod",
+        "bucket_name": "nw-sls-deploy-854045450972-test",
         "veracode_appid": 325008,
         "veracode_sandboxid": 385022,
         "data": [
           {
-            "directory": "serverless/nwApiGateway/test/1500945193794-2017-07-25T01:13:13.794Z",
+            "directory": "serverless/nwApiGateway/test",
             "filename": "nwApiGateway.zip"
           },
           {
-            "directory":"serverless/nwClassicIntStreams/test/1500945489501-2017-07-25T01:18:09.501Z",
+            "directory":"serverless/nwClassicIntStreams/",
             "filename": "nwClassicIntStreams.zip"
           },
           {
-            "directory":"serverless/nwIAM/test/1500945284993-2017-07-25T01:14:44.993Z",
+            "directory":"serverless/nwIAM/test",
             "filename": "nwIAM.zip"
           }
         ]
