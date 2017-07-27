@@ -1,40 +1,20 @@
  {
       "filesData": {
-        "bucket_name": "S3nw-sls-deploy-668385047392-prod",
+        "bucket_name": "nw-sls-deploy-854045450972-test",
         "veracode_appid": 325008,
         "veracode_sandboxid": 385022,
         "data": [
           {
-            "directory": "serverless/nwApiGateway/prod/",
+            "directory": "serverless/nwApiGateway/test",
             "filename": "nwApiGateway.zip"
           },
           {
-            "directory":"serverless/nwClassicIntStreams/prod/",
+            "directory":"serverless/nwClassicIntStreams/",
             "filename": "nwClassicIntStreams.zip"
           },
           {
-            "directory":"serverless/nwClassicIntegration/prod/",
-            "filename": "nwClassicIntegration.zip"
-          },
-          {
-            "directory":"serverless/nwIAM/prod/",
+            "directory":"serverless/nwIAM/test",
             "filename": "nwIAM.zip"
-          },
-          {
-            "directory":"serverless/nwInfra/prod/",
-            "filename": "nwInfra.zip"
-          },
-          {
-            "directory":"serverless/nwVault/prod/",
-            "filename": "nwVault.zip"
-          },
-          {
-            "directory":"serverless/nwWatchlist/prod/",
-            "filename": "nwWatchlist.zip"
-          },
-          {
-            "directory":"serverless/nwWatchlistStreams/prod/",
-            "filename": "nwWatchlistStreams.zip"
           }
         ]
       }

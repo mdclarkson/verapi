@@ -25,6 +25,10 @@ import logging
 from os.path import expanduser
 import os, boto3, base64, botocore, json, re, datetime
 import xml.etree.ElementTree as ET
+from base64 import b64decode
+from botocore.exceptions import ClientError
+from datetime import datetime
+from dateutil import tz
 
 
 s3r = boto3.resource('s3')
@@ -42,6 +46,7 @@ class ManageLambdaFunction:
 
         # Response Object
         self.response = {}
+        self.response["body"] = {}
         self.response['headers'] = {'Access-Control-Allow-Origin': '*'}
         self.response['statusCode'] = 200
         self.bad_http_requests = "Error requests wrong format"
@@ -50,73 +55,59 @@ class ManageLambdaFunction:
         self.sandboxID = ""
         self.appID = ""
 
+    # Return Response event for API gateway
+    def get_response(self):
+        return self.response
 
-    # check http response code
-    def check_http_response(self, event):
+    # Get last modified file
+    def get_last_modified(self, obj):
+        objName = fullName = ""
+        from_zone = tz.gettz('UTC')
+        utc = datetime.strptime('2000-01-21 02:37:21', '%Y-%m-%d %H:%M:%S') # make sure that the datetime is old enough
+        utc = utc.replace(tzinfo=from_zone)
 
-        get_json = {}
-
+        lastmodified = utc
         try:
-            get_json = json.loads(event)
-            checkJson = True
-        except KeyError:
-            self.response["body"] = self.bad_http_requests
-            self.response['statusCode'] = 404
-        except TypeError:
-            self.response["body"] = self.bad_http_requests
-            self.response['statusCode'] = 404
-
-        return get_json
-
-    # Download file from s3 bucket to Lambda
-    def download_s3_files(self, file_to_download, filename):
-
-        localFilename = self.lambda_file_path.format(os.path.basename(filename))
-        try:
-            s3.download_file(Bucket=self.bucket_name, Key=file_to_download, Filename=localFilename)
+            my_bucket = s3r.Bucket(self.bucket_name)
+            for key in my_bucket.objects.filter(Prefix=obj["directory"]):
+                if lastmodified < key.last_modified and obj["filename"] in key.key:
+                    lastmodified = key.last_modified
+                    objName = obj["filename"]
+                    fullName = key.key
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
-                self.response["body"] = "The object does not exist {}".format(filename)
+                self.response["body"] = "The object does not exist {}".format(obj["directory"]+obj["filename"])
                 self.response["statusCode"] = 403
             elif e.response['Error']['Code'] == "403":
-                self.response["body"] = "You do not have the permnission to get the object {}".format(filename)
+                self.response["body"] = "You do not have the permission to get the object {}".format(obj["directory"]+obj["filename"])
+                self.response["statusCode"] = 403
+            elif e.response['Error']['Code'] in ['ParamValidationError','NoSuchBucket']:
+                self.response["body"] = "The object does not exist {}".format(self.bucket_name)
                 self.response["statusCode"] = 403
             else:
                 raise
 
+        return objName, fullName
 
-    # Multi Upload files
-    def multi_upload_files(self, files):
+    # Download file from s3 bucket to Lambda
+    def download_s3_files(self, filedata):
 
-        for obj in files:
+        for obj in filedata:
+            objName, fullName = self.get_last_modified(obj)
+            localFilename = self.lambda_file_path.format(os.path.basename(objName))
 
-            # Save files in Lambda /tmp then get filenames
-            try:
-                my_bucket = s3r.Bucket(self.bucket_name)
-                for obj in my_bucket.objects.filter(Prefix=file["directory"]):
-                    if file["filename"] in obj.key:
-                        lastmodified_filename = obj.key
-            except:
-                self.response["body"] = "The object does not exist {}".format(my_bucket.name)
-                self.response["statusCode"] = 404
-
-            if self.response["statusCode"] == 200:
-                self.download_s3_files(lastmodified_filename, file["filename"])
+            if objName:
+                s3.download_file(Bucket=self.bucket_name, Key=fullName, Filename=localFilename)
 
         return self.response["statusCode"]
-
-
-    # Return Response event for API gateway
-    def get_response(self):
-        return self.response
 
 # Manage all functions
 class veracodeAPI:
     def __init__(self):
         self.message = {}
         self.credential = {}
-        self.credential["username"] = self.decrypt_kms_keys("USERNAME")
-        self.credential["password"] = self.decrypt_kms_keys("PASSWORD")
+        self.credential["username"] = self.decrypt_kms_keys(os.environ.get("USERNAME"))
+        self.credential["password"] = self.decrypt_kms_keys(os.environ.get("PASSWORD"))
         # self.credential["username"] = os.environ.get("USERNAME")
         # self.credential["password"] = os.environ.get("PASSWORD")
 
@@ -178,14 +169,10 @@ class veracodeAPI:
 
 
     # Decrypt environment variable
-    def decrypt_kms_keys(self, encrypted_string):
-        plaintext = ""
+    def decrypt_kms_keys(self, object):
+        decrypted = boto3.client('kms').decrypt(CiphertextBlob=b64decode(object))['Plaintext']
 
-        meta = kms.decrypt(CiphertextBlob=encrypted_string)
-        plaintext = meta[u'Plaintext']
-
-        return plaintext
-
+        return decrypted
 
 
 # Open XML and Match XML text
@@ -197,88 +184,98 @@ def match_string_tag(string, root):
     return re.match(string, root.tag)
 
 # Function which will call Veracode API
-def lambda_function_postfiles(context, event):
+def lambda_function_postfiles(event, context):
     MyMLF = ManageLambdaFunction()
     MyVAPI = veracodeAPI()
+    filesData = {}
+    http_param = {}
 
-    # f = open("resources/upload_files.json", "r")
-
-    # check http response
     try:
-        http_param = MyMLF.check_http_response(event["body"])
+        http_param = event["body"]
     except KeyError:
-        print("this need to be send via HTTP request")
-        exit(1)
+        MyMLF.response["body"] = "You should specify a body"
 
-    filesData = http_param["filesData"]
+    if http_param:
+        try:
+            filesData = http_param["filesData"]
 
-    MyMLF.sandboxID = filesData["veracode_sandboxid"]
-    MyMLF.appID = filesData["veracode_appid"]
-    MyMLF.bucket_name = filesData["bucket_name"]
+            MyMLF.sandboxID = filesData["veracode_sandboxid"]
+            MyMLF.appID = filesData["veracode_appid"]
+            MyMLF.bucket_name = filesData["bucket_name"]
+        except KeyError:
+            MyMLF.response["body"] = "Wrong format HTTP request Please check your content type"
 
     if filesData:
 
         #  Call Upload API to Veracode with credential, filename and application information
-        statusCode = MyMLF.multi_upload_files(filesData["data"])
+        MyMLF.download_s3_files(filesData["data"])
 
-        if statusCode == 200:
+        if MyMLF.response["statusCode"] == 200:
 
             for file in filesData["data"]:
                 # Upload files to Veracode
                 file_in_fs = MyMLF.lambda_file_path.format(file["filename"])
-                r = MyVAPI.upload_file(app_id='{}'.format(MyMLF.appID), filename='{}'.format(file_in_fs), sandbox_id='{}'.format(MyMLF.sandboxID), save_as="")
+
+                try:
+                    r = MyVAPI.upload_file(app_id='{}'.format(MyMLF.appID), filename='{}'.format(file_in_fs), sandbox_id='{}'.format(MyMLF.sandboxID), save_as="")
+                except IOError:
+                    MyMLF.response["statusCode"] = 404
+                    MyMLF.response["body"] = "No such file or directory: {}".format(file_in_fs)
 
             print("\n")
-            # Call Function which will start the scan
-            # Call the pre scan function to check the modules before scanning: autoscan: true => this will scan all the modules when the prescan finishes
-            r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': False, 'autoscan': True, 'sandbox_id': u'{}'.format(MyMLF.sandboxID), 'app_id': u'{}'.format(MyMLF.appID)})
-            root = ET.fromstring(r.text)
-            if match_string_text("A scan request has already been submitted for this build.", root):
-                MyMLF.response["body"] = "A scan request has already been submitted for this build."
-            if match_string_text("Access Denied", root):
-                MyMLF.response["body"] = "Access Denied to submit the upload: check sandboxID/appID"
-            if match_string_tag("buildinfo", root):
-                MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
+            if MyMLF.response["statusCode"] == 200:
+                # Call Function which will start the scan
+                # Call the pre scan function to check the modules before scanning: autoscan: true => this will scan all the modules when the prescan finishes
+                r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': False, 'autoscan': True, 'sandbox_id': u'{}'.format(MyMLF.sandboxID), 'app_id': u'{}'.format(MyMLF.appID)})
+                root = ET.fromstring(r.text)
+                if match_string_text("A scan request has already been submitted for this build.", root):
+                    MyMLF.response["body"] = "A scan request has already been submitted for this build."
+                    MyMLF.response["statusCode"] = 200
+                if match_string_text("Access Denied", root):
+                    MyMLF.response["body"] = "Access Denied to submit the upload: check sandboxID/appID"
+                    MyMLF.response["statusCode"] = 403
+                if match_string_tag("buildinfo", root):
+                    MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
+                    MyMLF.response["statusCode"] = 200
 
     response = MyMLF.get_response()
 
     return response
 
 # Call Veracode Function which will get results
-def lambda_function_getresults(context, event):
+def lambda_function_getresults(event, context):
     MyMLF = ManageLambdaFunction()
     MyVAPI = veracodeAPI()
     scan_results = []
     veracode_attributs = {}
+    http_param = {}
 
     # check http response
     try:
-        http_param = MyMLF.check_http_response(event["pathParameters"])
+        http_param = event["path"]
     except KeyError:
-        print("this need to be send via HTTP request")
-        exit(1)
+        MyMLF.response["body"] = "You should specify an appid in the path parameter"
 
     # Check appid
-    if "appid" in http_param:
+    if http_param:
         appid = http_param['appid']
 
-    # Call function to check the results
-    results = MyVAPI.get_prescan_results({'app_id':"{}".format(appid)})
+        # Call function to check the results
+        results = MyVAPI.get_prescan_results({'app_id':"{}".format(appid)})
 
-    #### Check results #####
-    root = ET.fromstring(results.text)
-    for child in root:
-        if  "status" in child.attrib:
+        #### Check results #####
+        root = ET.fromstring(results.text)
+        for child in root:
+            if  "status" in child.attrib:
 
-            veracode_attributs = {
-                "name": child.attrib["name"],
-                "platform": child.attrib["platform"],
-                "status": child.attrib["status"]
-            }
+                veracode_attributs = {
+                    "name": child.attrib["name"],
+                    "platform": child.attrib["platform"],
+                    "status": child.attrib["status"]
+                }
 
-            scan_results.append(veracode_attributs)
-
-    MyMLF.response["body"] = scan_results
+                scan_results.append(veracode_attributs)
+        MyMLF.response["body"] = scan_results
     response = MyMLF.get_response()
 
     return response
@@ -287,5 +284,5 @@ def lambda_function_getresults(context, event):
 # Test case
 if __name__ == "__main__":
     context = event = {}
-    lambda_function_getresults(context, event)
+    lambda_function_postfiles(event, context)
 

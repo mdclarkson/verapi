@@ -40,8 +40,10 @@ functions:
           path: api/nwVerapi/sendFiles
           method: post
           integration: lambda
-#          authorizer:
-#            type: aws_iam
+          authorizer:
+            type: aws_iam
+          cors: true
+
 
   nwVerapiGet:
     handler: handler.lambda_function_getresults
@@ -65,5 +67,6 @@ functions:
           path: api/nwVerapi/getResults/{appid}
           method: get
           integration: lambda
-#          authorizer:
-#            type: aws_iam
+          authorizer:
+            type: aws_iam
+          cors: true

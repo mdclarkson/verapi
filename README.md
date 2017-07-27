@@ -19,62 +19,49 @@ KMS encrypted for API [here](https://github.com/marcy-terui/serverless-crypt)
 
 ### USAGE
 
+You need to specify IAM Auth in your requests
+- AccessKey [your-access-key]
+- SecretKey: [your-secret-access-key]
+- AWS Region: us-east-1
+- Service Name: execute-api
+
 To post files to scan you need to perform this command:
 
 ```
-curl --header "Content-Type: application/json" -X POST  -d @resources/test_upload.json
+curl --header "Content-Type: application/json" -X POST https://rxowq2u7oj.execute-api.us-east-1.amazonaws.com/dev/api/nwVerapi/sendFiles -d @resources/test_upload.json
 ```
 
 To get the results you have to perform this command:
 
 ```
-curl --header "Content-Type: application/json" -X GET
+curl --header "Content-Type: application/json" -X GET https://rxowq2u7oj.execute-api.us-east-1.amazonaws.com/dev/api/nwVerapi/getResults/{appid}
 ```
 
 
 ### POST API to Veracode
-
-    {
+```
+   {
       "filesData": {
         "bucket_name": "S3nw-sls-deploy-668385047392-prod",
         "veracode_appid": 325008,
-        "veracode_sandboxid": 385022
+        "veracode_sandboxid": 385022,
         "data": [
           {
-            "directory": "serverless/nwApiGateway/prod/",
+            "directory": "serverless/nwApiGateway/test/1500945193794-2017-07-25T01:13:13.794Z",
             "filename": "nwApiGateway.zip"
           },
           {
-            "directory":"serverless/nwClassicIntStreams/prod/",
+            "directory":"serverless/nwClassicIntStreams/test/1500945489501-2017-07-25T01:18:09.501Z",
             "filename": "nwClassicIntStreams.zip"
           },
           {
-            "directory":"serverless/nwClassicIntegration/prod/",
-            "filename": "nwClassicIntegration.zip"
-          },
-          {
-            "directory":"serverless/nwIAM/prod/",
+            "directory":"serverless/nwIAM/test/1500945284993-2017-07-25T01:14:44.993Z",
             "filename": "nwIAM.zip"
-          },
-          {
-            "directory":"serverless/nwInfra/prod/",
-            "filename": "nwInfra.zip"
-          },
-          {
-            "directory":"serverless/nwVault/prod/",
-            "filename": "nwVault.zip"
-          },
-          {
-            "directory":"serverless/nwWatchlist/prod/",
-            "filename": "nwWatchlist.zip"
-          },
-          {
-            "directory":"serverless/nwWatchlistStreams/prod/",
-            "filename": "nwWatchlistStreams.zip"
           }
         ]
       }
     }
+```
 
 ## GET results from Veracode
 ```
