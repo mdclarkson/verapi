@@ -1,0 +1,9 @@
+# Properties for the lambda function
+aws-lambda-role: "arn:aws:iam::854045450972:role/nw-Verapi"
+use_iam_auth: true
+aws-lambda-sg: "sg-2bf12657"
+aws-lambda-subnet1: "subnet-2aa9d363"
+aws-lambda-subnet2: "subnet-2d63e800"
+aws-region: "us-east-1"
+username: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgHjyc4pnAOVYoJRQ3EHr1IWAAAAaTBnBgkqhkiG9w0BBwagWjBYAgEAMFMGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMcza1DVDG7qLapJlRAgEQgCaciUSP4M2QA7gNT6HWlnU19CCLqVMAP9aQ9N+MClUSWB602QTdsg==
+password: AQICAHjjBKYaKAgFQxgrQPU/6U1hSfKXyFbs1pAt/kPRbpMBfgHEnd/82khrF766ZkZwcYafAAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMoEu9C6Brp9cqSrmUAgEQgCvHd0rDeEKzhqxxcg+0hhbvTIHYM+rn5I9wEjcvtkUXrmaUTrTQbjoMsDoL

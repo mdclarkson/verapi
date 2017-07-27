@@ -1,9 +1,5 @@
 
-service: nwVerapi # NOTE: update this with your service name
-
-# You can pin your service to only deploy with a specific Serverless version
-# Check out our docs for more details
-# frameworkVersion: "=X.X.X"
+service: nwVerapi
 
 # you can overwrite defaults here
 stage: ${self:provider.stage}
@@ -21,28 +17,56 @@ custom:
 
 # Function Lambda for veracode
 functions:
-  nwLambdaVerapi:
-    handler: handler.lambda_function
-    name: nwVerapi
+  nwVerapiPost:
+    handler: handler.lambda_function_postfiles
+    name: nwVerapi-postFiles
     description: Veracode API For upload and scan
     runtime: python2.7
     memorySize: 512
     timeout: 30
-
     environment:
-      username: ${self:custom.cryptKeyId.username}
-      password: ${self:custom.cryptKeyId.password}
+      USERNAME: ${file(properties.yml):username}
+      PASSWORD: ${file(properties.yml):password}
+    region: ${file(properties.yml):aws-region}
+    vpc:
+      securityGroupIds:
+        - ${file(properties.yml):aws-lambda-sg}
+      subnetIds:
+        - ${file(properties.yml):aws-lambda-subnet1}
+        - ${file(properties.yml):aws-lambda-subnet2}
+
     events:
       - http:
-          path: api/nwVerapi
+          path: api/nwVerapi/sendFiles
           method: post
           integration: lambda
-
-    resources:
-      Resources:
-        ApiGatewayMethodnwVerapiPost:
-           Properties:
-             AuthorizationType: AWS_IAM
+          authorizer:
+            type: aws_iam
+          cors: true
 
 
-
+  nwVerapiGet:
+    handler: handler.lambda_function_getresults
+    name: nwVerapi-getResults
+    description: Veracode API Get results
+    runtime: python2.7
+    memorySize: 512
+    timeout: 30
+    environment:
+      USERNAME: ${file(properties.yml):username}
+      PASSWORD: ${file(properties.yml):password}
+    region: ${file(properties.yml):aws-region}
+    vpc:
+      securityGroupIds:
+        - ${file(properties.yml):aws-lambda-sg}
+      subnetIds:
+        - ${file(properties.yml):aws-lambda-subnet1}
+        - ${file(properties.yml):aws-lambda-subnet2}
+    events:
+      - http:
+          path: api/nwVerapi/getResults/{appid}
+          method: get
+          integration: lambda
+          authorizer:
+            type: aws_iam
+          cors: true

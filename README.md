@@ -17,48 +17,70 @@ You need to post a JSON by using AWS signing v4 available [here](http://docs.aws
 
 KMS encrypted for API [here](https://github.com/marcy-terui/serverless-crypt)
 
-Here is an example of JSON to POST to Veracode API
+### USAGE
 
-    {
+You need to specify IAM Auth in your requests
+- AccessKey [your-access-key]
+- SecretKey: [your-secret-access-key]
+- AWS Region: us-east-1
+- Service Name: execute-api
+
+To post files to scan you need to perform this command:
+
+```
+curl --header "Content-Type: application/json" -X POST https://rxowq2u7oj.execute-api.us-east-1.amazonaws.com/dev/api/nwVerapi/sendFiles -d @resources/test_upload.json
+```
+
+To get the results you have to perform this command:
+
+```
+curl --header "Content-Type: application/json" -X GET https://rxowq2u7oj.execute-api.us-east-1.amazonaws.com/dev/api/nwVerapi/getResults/{appid}
+```
+
+
+### POST API to Veracode
+```
+ {
       "filesData": {
-        "bucket_name": "S3nw-sls-deploy-668385047392-prod",
+        "bucket_name": "nw-sls-deploy-854045450972-test",
         "veracode_appid": 325008,
-        "veracode_sandboxid": 385022
+        "veracode_sandboxid": 385022,
         "data": [
           {
-            "directory": "serverless/nwApiGateway/prod/",
+            "directory": "serverless/nwApiGateway/test",
             "filename": "nwApiGateway.zip"
           },
           {
-            "directory":"serverless/nwClassicIntStreams/prod/",
+            "directory":"serverless/nwClassicIntStreams/",
             "filename": "nwClassicIntStreams.zip"
           },
           {
-            "directory":"serverless/nwClassicIntegration/prod/",
-            "filename": "nwClassicIntegration.zip"
-          },
-          {
-            "directory":"serverless/nwIAM/prod/",
+            "directory":"serverless/nwIAM/test",
             "filename": "nwIAM.zip"
-          },
-          {
-            "directory":"serverless/nwInfra/prod/",
-            "filename": "nwInfra.zip"
-          },
-          {
-            "directory":"serverless/nwVault/prod/",
-            "filename": "nwVault.zip"
-          },
-          {
-            "directory":"serverless/nwWatchlist/prod/",
-            "filename": "nwWatchlist.zip"
-          },
-          {
-            "directory":"serverless/nwWatchlistStreams/prod/",
-            "filename": "nwWatchlistStreams.zip"
           }
         ]
       }
     }
+```
 
-
+## GET results from Veracode
+```
+{
+   "body":[
+      {
+         "status":"OK",
+         "platform":"JAVASCRIPT / JavaScript / JAVASCRIPT_5_1",
+         "name":"JS files within nw-iam-master.zip"
+      },
+      {
+         "status":"OK",
+         "platform":"JVM / Java J2SE 6 / JAVAC_5",
+         "name":"gradle-wrapper.jar"
+      }
+   ],
+   "headers":{
+      "Access-Control-Allow-Origin":"*"
+   },
+   "statusCode":200
+}
+```
