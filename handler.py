@@ -226,17 +226,22 @@ def lambda_function_postfiles(event, context):
             if MyMLF.response["statusCode"] == 200:
                 # Call Function which will start the scan
                 # Call the pre scan function to check the modules before scanning: autoscan: true => this will scan all the modules when the prescan finishes
-                r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': False, 'autoscan': True, 'sandbox_id': u'{}'.format(MyMLF.sandboxID), 'app_id': u'{}'.format(MyMLF.appID)})
-                root = ET.fromstring(r.text)
-                if match_string_text("A scan request has already been submitted for this build.", root):
-                    MyMLF.response["body"] = "A scan request has already been submitted for this build."
-                    MyMLF.response["statusCode"] = 200
-                if match_string_text("Access Denied", root):
-                    MyMLF.response["body"] = "Access Denied to submit the upload: check sandboxID/appID"
-                    MyMLF.response["statusCode"] = 403
-                if match_string_tag("buildinfo", root):
-                    MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
-                    MyMLF.response["statusCode"] = 200
+
+                try:
+                    r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': False, 'autoscan': True, 'sandbox_id': u'{}'.format(MyMLF.sandboxID), 'app_id': u'{}'.format(MyMLF.appID)})
+                    root = ET.fromstring(r.text)
+                    if match_string_text("A scan request has already been submitted for this build.", root):
+                        MyMLF.response["body"] = "A scan request has already been submitted for this build."
+                        MyMLF.response["statusCode"] = 200
+                    if match_string_text("Access Denied", root):
+                        MyMLF.response["body"] = "Access Denied to submit the upload: check sandboxID/appID"
+                        MyMLF.response["statusCode"] = 403
+                    if match_string_tag("buildinfo", root):
+                        MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
+                        MyMLF.response["statusCode"] = 200
+                except TypeError:
+                    MyMLF.response["body"] = "XML failed to parse"
+                    MyMLF.response["statusCode"] = 500
 
     response = MyMLF.get_response()
 
