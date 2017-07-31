@@ -19,8 +19,10 @@ __author__ = "Clyde Fondop"
 
 import click
 from clint.textui.progress import Bar as ProgressBar
-import requests
+import requests, ast
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
+from aws_requests_auth.aws_auth import AWSRequestsAuth
+from aws_requests_auth import boto_utils
 import logging
 from os.path import expanduser
 import os, boto3, base64, botocore, json, re, datetime
@@ -34,6 +36,7 @@ from dateutil import tz
 s3r = boto3.resource('s3')
 s3 = boto3.client('s3')
 kms = boto3.client('kms')
+lamb = boto3.client('lambda', region_name='us-east-1')
 
 VERACODE_API_URL = 'https://analysiscenter.veracode.com/api/5.0/'
 
@@ -50,10 +53,15 @@ class ManageLambdaFunction:
         self.response['headers'] = {'Access-Control-Allow-Origin': '*'}
         self.response['statusCode'] = 200
         self.bad_http_requests = "Error requests wrong format"
+        self.tab_files = []
 
+        # AWS / Veracode Informations
         self.bucket_name = ""
         self.sandboxID = ""
+        self.prefix_bucket = ""
+        self.environment = ""
         self.appID = ""
+
 
     # Return Response event for API gateway
     def get_response(self):
@@ -65,15 +73,16 @@ class ManageLambdaFunction:
         from_zone = tz.gettz('UTC')
         utc = datetime.strptime('2000-01-21 02:37:21', '%Y-%m-%d %H:%M:%S') # make sure that the datetime is old enough
         utc = utc.replace(tzinfo=from_zone)
+        my_bucket = s3r.Bucket(self.bucket_name)
 
         lastmodified = utc
         try:
-            my_bucket = s3r.Bucket(self.bucket_name)
-            for key in my_bucket.objects.filter(Prefix=obj["directory"]):
+            for key in my_bucket.objects.filter(Prefix="{}/{}/{}".format(self.prefix_bucket, obj["directory"], self.environment)):
                 if lastmodified < key.last_modified and obj["filename"] in key.key:
                     lastmodified = key.last_modified
                     objName = obj["filename"]
                     fullName = key.key
+                    self.tab_files.append(obj["filename"])
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == "404":
                 self.response["body"] = "The object does not exist {}".format(obj["directory"]+obj["filename"])
@@ -90,10 +99,21 @@ class ManageLambdaFunction:
         return objName, fullName
 
     # Download file from s3 bucket to Lambda
-    def download_s3_files(self, filedata):
+    def download_s3_files(self):
+        result_folder = s3.list_objects(Bucket=self.bucket_name, Prefix="{}/".format(self.prefix_bucket), Delimiter='/')
 
-        for obj in filedata:
-            objName, fullName = self.get_last_modified(obj)
+        data = []
+        for o in result_folder.get('CommonPrefixes'):
+
+            obj = {
+                "directory":o.get('Prefix').split("/")[1],
+                "filename":"{}.zip".format(o.get('Prefix').split("/")[1])
+            }
+            data.append(obj)
+            obj = {}
+
+        for obj_info in data:
+            objName, fullName = self.get_last_modified(obj_info)
             localFilename = self.lambda_file_path.format(os.path.basename(objName))
 
             if objName:
@@ -129,7 +149,8 @@ class veracodeAPI:
         return self.api_submit(api_endpoint, payload)
 
     # Function d upload file for Veracode
-    def upload_file(self, app_id, filename, sandbox_id, save_as):
+    def upload_file(self, app_id, filename, save_as, sandbox_id):
+        sandbox_id= ""
         """Uploads a file"""
         fields = {'app_id': app_id}
         if sandbox_id:
@@ -144,7 +165,6 @@ class veracodeAPI:
         api_endpoint = "uploadfile.do"
         r = requests.post(VERACODE_API_URL + api_endpoint, data=monitor, headers={'Content-Type': encoder.content_type},
                           auth=(self.credential["username"], self.credential["password"]))
-        # print(r.text)
         return r
 
     # Encode request for Veracode
@@ -188,36 +208,47 @@ def lambda_function_postfiles(event, context):
     MyMLF = ManageLambdaFunction()
     MyVAPI = veracodeAPI()
     filesData = {}
-    http_param = {}
+    http_param = ""
 
     try:
-        http_param = event["body"]
+        http_param = ast.literal_eval(event["body"])
     except KeyError:
         MyMLF.response["body"] = "You should specify a body"
 
+
     if http_param:
         try:
-            filesData = http_param["filesData"]
+            filesData = http_param
 
-            MyMLF.sandboxID = filesData["veracode_sandboxid"]
             MyMLF.appID = filesData["veracode_appid"]
             MyMLF.bucket_name = filesData["bucket_name"]
-        except KeyError:
+            MyMLF.prefix_bucket = filesData["prefix_bucket"]
+            MyMLF.environment = filesData["environment"]
+            MyMLF.sandboxID = filesData["veracode_sandboxid"]
+        except TypeError:
             MyMLF.response["body"] = "Wrong format HTTP request Please check your content type"
+            MyMLF.response["statusCode"] = 404
+        except KeyError:
+            MyMLF.response["body"] = "Wrong key, check your input json"
+            MyMLF.response["statusCode"] = 404
 
     if filesData:
 
         #  Call Upload API to Veracode with credential, filename and application information
-        MyMLF.download_s3_files(filesData["data"])
+        MyMLF.download_s3_files()
 
         if MyMLF.response["statusCode"] == 200:
 
-            for file in filesData["data"]:
+            # Unique table of file
+            uniq_tab_files = sorted(set(MyMLF.tab_files))
+
+            for file in uniq_tab_files:
+
                 # Upload files to Veracode
-                file_in_fs = MyMLF.lambda_file_path.format(file["filename"])
+                file_in_fs = MyMLF.lambda_file_path.format(file)
 
                 try:
-                    r = MyVAPI.upload_file(app_id='{}'.format(MyMLF.appID), filename='{}'.format(file_in_fs), sandbox_id='{}'.format(MyMLF.sandboxID), save_as="")
+                    r = MyVAPI.upload_file(app_id='{}'.format(MyMLF.appID), filename='{}'.format(file_in_fs), save_as="", sandbox_id=MyMLF.sandboxID)
                 except IOError:
                     MyMLF.response["statusCode"] = 404
                     MyMLF.response["body"] = "No such file or directory: {}".format(file_in_fs)
@@ -227,23 +258,25 @@ def lambda_function_postfiles(event, context):
                 # Call Function which will start the scan
                 # Call the pre scan function to check the modules before scanning: autoscan: true => this will scan all the modules when the prescan finishes
 
+                # try:
+                r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': True, 'autoscan': True,  'app_id': u'{}'.format(MyMLF.appID), 'sandbox_id':MyMLF.sandboxID})
                 try:
-                    r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': False, 'autoscan': True, 'sandbox_id': u'{}'.format(MyMLF.sandboxID), 'app_id': u'{}'.format(MyMLF.appID)})
                     root = ET.fromstring(r.text)
                     if match_string_text("A scan request has already been submitted for this build.", root):
                         MyMLF.response["body"] = "A scan request has already been submitted for this build."
                         MyMLF.response["statusCode"] = 200
-                    if match_string_text("Access Denied", root):
+                    if match_string_text("Access denied.", root):
                         MyMLF.response["body"] = "Access Denied to submit the upload: check sandboxID/appID"
                         MyMLF.response["statusCode"] = 403
                     if match_string_tag("buildinfo", root):
                         MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
                         MyMLF.response["statusCode"] = 200
                 except TypeError:
-                    MyMLF.response["body"] = "XML failed to parse"
-                    MyMLF.response["statusCode"] = 500
+                    MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
+                    MyMLF.response["statusCode"] = 200
 
     response = MyMLF.get_response()
+    print("{} {}".format(datetime.datetime.now().isoformat(),response))
 
     return response
 
@@ -283,11 +316,13 @@ def lambda_function_getresults(event, context):
         MyMLF.response["body"] = scan_results
     response = MyMLF.get_response()
 
+    print("{} {}".format(datetime.datetime.now().isoformat(),response))
+
     return response
 
 
 # Test case
 if __name__ == "__main__":
     context = event = {}
-    lambda_function_postfiles(event, context)
+    lambda_function_getresults(event, context)
 
