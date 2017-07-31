@@ -21,8 +21,6 @@ import click
 from clint.textui.progress import Bar as ProgressBar
 import requests, ast
 from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
-from aws_requests_auth.aws_auth import AWSRequestsAuth
-from aws_requests_auth import boto_utils
 import logging
 from os.path import expanduser
 import os, boto3, base64, botocore, json, re, datetime
@@ -269,14 +267,14 @@ def lambda_function_postfiles(event, context):
                         MyMLF.response["body"] = "Access Denied to submit the upload: check sandboxID/appID"
                         MyMLF.response["statusCode"] = 403
                     if match_string_tag("buildinfo", root):
-                        MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
+                        MyMLF.response["body"] = "scan properly submitted {}".format(datetime.now().isoformat())
                         MyMLF.response["statusCode"] = 200
                 except TypeError:
-                    MyMLF.response["body"] = "scan properly submitted {}".format(datetime.datetime.now().isoformat())
+                    MyMLF.response["body"] = "scan properly submitted {}".format(datetime.now().isoformat())
                     MyMLF.response["statusCode"] = 200
 
     response = MyMLF.get_response()
-    print("{} {}".format(datetime.datetime.now().isoformat(),response))
+    print("{} {}".format(datetime.now().isoformat(),response))
 
     return response
 
@@ -296,7 +294,7 @@ def lambda_function_getresults(event, context):
 
     # Check appid
     if http_param:
-        appid = http_param['appid']
+        appid = ast.literal_eval(http_param['appid'])
 
         # Call function to check the results
         results = MyVAPI.get_prescan_results({'app_id':"{}".format(appid)})
@@ -316,7 +314,7 @@ def lambda_function_getresults(event, context):
         MyMLF.response["body"] = scan_results
     response = MyMLF.get_response()
 
-    print("{} {}".format(datetime.datetime.now().isoformat(),response))
+    print("{} {}".format(datetime.now().isoformat(),response))
 
     return response
 
