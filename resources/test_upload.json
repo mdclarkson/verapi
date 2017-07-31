@@ -1,21 +1,9 @@
- {
-      "filesData": {
-        "bucket_name": "nw-sls-deploy-854045450972-test",
-        "veracode_appid": 325008,
-        "veracode_sandboxid": 385022,
-        "data": [
-          {
-            "directory": "serverless/nwApiGateway/test",
-            "filename": "nwApiGateway.zip"
-          },
-          {
-            "directory":"serverless/nwClassicIntStreams/",
-            "filename": "nwClassicIntStreams.zip"
-          },
-          {
-            "directory":"serverless/nwIAM/test",
-            "filename": "nwIAM.zip"
-          }
-        ]
-      }
-    }
+{
+  "filesData": {
+    "bucket_name": "nw-sls-deploy-854045450972-test",
+    "veracode_appid": 34257,
+    "prefix_bucket": "serverless",
+    "environment": "test",
+    "veracode_sandboxid": 11111
+  }
+}
