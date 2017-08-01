@@ -28,12 +28,12 @@ functions:
       USERNAME: ${file(properties.yml):username}
       PASSWORD: ${file(properties.yml):password}
     region: ${file(properties.yml):aws-region}
-    vpc:
-      securityGroupIds:
-        - ${file(properties.yml):aws-lambda-sg}
-      subnetIds:
-        - ${file(properties.yml):aws-lambda-subnet1}
-        - ${file(properties.yml):aws-lambda-subnet2}
+#    vpc:
+#      securityGroupIds:
+#        - ${file(properties.yml):aws-lambda-sg}
+#      subnetIds:
+#        - ${file(properties.yml):aws-lambda-subnet1}
+#        - ${file(properties.yml):aws-lambda-subnet2}
 
     events:
       - http:
@@ -56,12 +56,12 @@ functions:
       USERNAME: ${file(properties.yml):username}
       PASSWORD: ${file(properties.yml):password}
     region: ${file(properties.yml):aws-region}
-    vpc:
-      securityGroupIds:
-        - ${file(properties.yml):aws-lambda-sg}
-      subnetIds:
-        - ${file(properties.yml):aws-lambda-subnet1}
-        - ${file(properties.yml):aws-lambda-subnet2}
+#    vpc:
+#      securityGroupIds:
+#        - ${file(properties.yml):aws-lambda-sg}
+#      subnetIds:
+#        - ${file(properties.yml):aws-lambda-subnet1}
+#        - ${file(properties.yml):aws-lambda-subnet2}
     events:
       - http:
           path: api/nwVerapi/getResults/{appid}

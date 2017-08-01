@@ -147,7 +147,7 @@ class veracodeAPI:
         return self.api_submit(api_endpoint, payload)
 
     # Function d upload file for Veracode
-    def upload_file(self, app_id, filename, save_as, sandbox_id):
+    def upload_file(self, app_id, filename, save_as):
         sandbox_id= ""
         """Uploads a file"""
         fields = {'app_id': app_id}
@@ -192,6 +192,23 @@ class veracodeAPI:
 
         return decrypted
 
+    # Remove Uploaded files before scan
+    def remove_files(self, tab_files, appid):
+        """Remove files from build/app."""
+        all_files_id = []
+        api_endpoint = "getfilelist.do"
+        xml_resp = self.api_submit(api_endpoint, payload={'app_id':appid})
+
+        # Open XML response for files
+        root = ET.fromstring(xml_resp.text)
+        for child in root:
+            if child.attrib['file_name'] in tab_files:
+                all_files_id.append(child.attrib["file_id"])
+
+        # Remove all previous files
+        api_endpoint = "removefile.do"
+        for file in all_files_id:
+            r = self.api_submit(api_endpoint, payload={'app_id': appid, 'file_id':file})
 
 # Open XML and Match XML text
 def match_string_text(string, root):
@@ -206,23 +223,21 @@ def lambda_function_postfiles(event, context):
     MyMLF = ManageLambdaFunction()
     MyVAPI = veracodeAPI()
     filesData = {}
-    http_param = ""
+    http_param = {}
 
     try:
         http_param = ast.literal_eval(event["body"])
     except KeyError:
         MyMLF.response["body"] = "You should specify a body"
 
-
     if http_param:
         try:
-            filesData = http_param
+            filesData = http_param["filesData"]
 
             MyMLF.appID = filesData["veracode_appid"]
             MyMLF.bucket_name = filesData["bucket_name"]
             MyMLF.prefix_bucket = filesData["prefix_bucket"]
             MyMLF.environment = filesData["environment"]
-            MyMLF.sandboxID = filesData["veracode_sandboxid"]
         except TypeError:
             MyMLF.response["body"] = "Wrong format HTTP request Please check your content type"
             MyMLF.response["statusCode"] = 404
@@ -240,13 +255,15 @@ def lambda_function_postfiles(event, context):
             # Unique table of file
             uniq_tab_files = sorted(set(MyMLF.tab_files))
 
+            MyVAPI.remove_files(uniq_tab_files, MyMLF.appID)
+
             for file in uniq_tab_files:
 
                 # Upload files to Veracode
                 file_in_fs = MyMLF.lambda_file_path.format(file)
 
                 try:
-                    r = MyVAPI.upload_file(app_id='{}'.format(MyMLF.appID), filename='{}'.format(file_in_fs), save_as="", sandbox_id=MyMLF.sandboxID)
+                    r = MyVAPI.upload_file(app_id='{}'.format(MyMLF.appID), filename='{}'.format(file_in_fs), save_as="")
                 except IOError:
                     MyMLF.response["statusCode"] = 404
                     MyMLF.response["body"] = "No such file or directory: {}".format(file_in_fs)
@@ -256,8 +273,7 @@ def lambda_function_postfiles(event, context):
                 # Call Function which will start the scan
                 # Call the pre scan function to check the modules before scanning: autoscan: true => this will scan all the modules when the prescan finishes
 
-                # try:
-                r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': True, 'autoscan': True,  'app_id': u'{}'.format(MyMLF.appID), 'sandbox_id':MyMLF.sandboxID})
+                r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': True, 'autoscan': True,  'app_id': u'{}'.format(MyMLF.appID)})
                 try:
                     root = ET.fromstring(r.text)
                     if match_string_text("A scan request has already been submitted for this build.", root):
@@ -270,8 +286,9 @@ def lambda_function_postfiles(event, context):
                         MyMLF.response["body"] = "scan properly submitted {}".format(datetime.now().isoformat())
                         MyMLF.response["statusCode"] = 200
                 except TypeError:
-                    MyMLF.response["body"] = "scan properly submitted {}".format(datetime.now().isoformat())
-                    MyMLF.response["statusCode"] = 200
+                    if "Pre-Scan Submitted" in r.text:
+                        MyMLF.response["body"] = "scan properly submitted {}".format(datetime.now().isoformat())
+                        MyMLF.response["statusCode"] = 200
 
     response = MyMLF.get_response()
     print("{} {}".format(datetime.now().isoformat(),response))
@@ -322,5 +339,5 @@ def lambda_function_getresults(event, context):
 # Test case
 if __name__ == "__main__":
     context = event = {}
-    lambda_function_getresults(event, context)
+    lambda_function_postfiles(event, context)
 

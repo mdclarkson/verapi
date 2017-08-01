@@ -1,9 +1,8 @@
 {
   "filesData": {
-    "bucket_name": "nw-sls-deploy-854045450972-test",
-    "veracode_appid": 34257,
+    "bucket_name": "nw-sls-deploy-941794040565-qa",
+    "veracode_appid": 326812,
     "prefix_bucket": "serverless",
-    "environment": "test",
-    "veracode_sandboxid": 11111
+    "environment": "qa"
   }
 }

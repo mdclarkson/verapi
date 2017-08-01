@@ -6,6 +6,8 @@ In order to use this you will need:
 - Generate AWS Access/Keys and create a AWS profile.
 - You will need to get a veracode service user available in this link [here](https://analysiscenter.veracode.com)
 
+This is only AWS on AWS NW AWS QA environment.
+
 ### How it works
 
 Go to veracode console and create and APP, create a sandbox into this app.
@@ -26,15 +28,16 @@ You need to specify IAM Auth in your requests
 - Service Name: execute-api
 
 To post files to scan you need to perform this command:
+PS: Because of API Gateway 30 seconds limitation, POST operations are not available for a build which requires important file size.
 
 ```
-curl --header "Content-Type: application/json" -X POST https://rxowq2u7oj.execute-api.us-east-1.amazonaws.com/dev/api/nwVerapi/sendFiles -d @resources/test_upload.json
+curl --header "Content-Type: application/json" -X POST https://qytqx7orfl.execute-api.us-east-1.amazonaws.com/qa/api/nwVerapi/sendFiles -d @resources/test_upload.json
 ```
 
 To get the results you have to perform this command:
 
 ```
-curl --header "Content-Type: application/json" -X GET https://rxowq2u7oj.execute-api.us-east-1.amazonaws.com/dev/api/nwVerapi/getResults/{appid}
+curl --header "Content-Type: application/json" -X GET ttps://qytqx7orfl.execute-api.us-east-1.amazonaws.com/qa/api/nwVerapi/getResults/{appid}
 ```
 
 
@@ -42,12 +45,11 @@ curl --header "Content-Type: application/json" -X GET https://rxowq2u7oj.execute
 ```
 {
   "filesData": {
-    "bucket_name": "nw-sls-deploy-854045450972-test",
-    "veracode_appid": 34257,
+    "bucket_name": "nw-sls-deploy-941794040565-qa",
+    "veracode_appid": 326812,
     "prefix_bucket": "serverless",
-    "environment": "test",
-    "veracode_sandboxid": 11111
-  }
+    "environment": "qa"
+    }
 }
 ```
 
