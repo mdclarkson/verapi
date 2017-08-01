@@ -15,7 +15,7 @@ plugins:
 custom:
   cryptKeyId: ${env:AWS_KMS_KEYID}
 
-# Function Lambda for veracode
+# Function Post files for veracode API
 functions:
   nwVerapiPost:
     handler: handler.lambda_function_postfiles
@@ -23,17 +23,17 @@ functions:
     description: Veracode API For upload and scan
     runtime: python2.7
     memorySize: 512
-    timeout: 30
+    timeout: 180
     environment:
       USERNAME: ${file(properties.yml):username}
       PASSWORD: ${file(properties.yml):password}
     region: ${file(properties.yml):aws-region}
-    vpc:
-      securityGroupIds:
-        - ${file(properties.yml):aws-lambda-sg}
-      subnetIds:
-        - ${file(properties.yml):aws-lambda-subnet1}
-        - ${file(properties.yml):aws-lambda-subnet2}
+#    vpc:
+#      securityGroupIds:
+#        - ${file(properties.yml):aws-lambda-sg}
+#      subnetIds:
+#        - ${file(properties.yml):aws-lambda-subnet1}
+#        - ${file(properties.yml):aws-lambda-subnet2}
 
     events:
       - http:
@@ -44,24 +44,24 @@ functions:
             type: aws_iam
           cors: true
 
-
+  # funciton Get results for veracode API
   nwVerapiGet:
     handler: handler.lambda_function_getresults
     name: nwVerapi-getResults
     description: Veracode API Get results
     runtime: python2.7
     memorySize: 512
-    timeout: 30
+    timeout: 60
     environment:
       USERNAME: ${file(properties.yml):username}
       PASSWORD: ${file(properties.yml):password}
     region: ${file(properties.yml):aws-region}
-    vpc:
-      securityGroupIds:
-        - ${file(properties.yml):aws-lambda-sg}
-      subnetIds:
-        - ${file(properties.yml):aws-lambda-subnet1}
-        - ${file(properties.yml):aws-lambda-subnet2}
+#    vpc:
+#      securityGroupIds:
+#        - ${file(properties.yml):aws-lambda-sg}
+#      subnetIds:
+#        - ${file(properties.yml):aws-lambda-subnet1}
+#        - ${file(properties.yml):aws-lambda-subnet2}
     events:
       - http:
           path: api/nwVerapi/getResults/{appid}
