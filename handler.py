@@ -328,7 +328,12 @@ def lambda_function_getresults(event, context):
                 }
 
                 scan_results.append(veracode_attributs)
-        MyMLF.response["body"] = scan_results
+
+        if scan_results:
+            MyMLF.response["body"] = scan_results
+        else:
+            MyMLF.response["body"] = "The scan {} does not have resuts yet".format(appid)
+
     response = MyMLF.get_response()
 
     print("{} {}".format(datetime.now().isoformat(),response))

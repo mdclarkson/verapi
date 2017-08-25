@@ -6,7 +6,7 @@
             "Sid": "Stmt1357935647218",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::941794040565:role/nwVerapi-qa-us-east-1-lambdaRole"
+                "AWS": "arn:aws:iam::941794040565:role/nwVerapi-qa-us-east-2-lambdaRole"
             },
             "Action": "s3:ListBucket",
             "Resource": "arn:aws:s3:::nw-sls-deploy-941794040565-qa"
@@ -15,7 +15,7 @@
             "Sid": "Stmt1357935647218",
             "Effect": "Allow",
             "Principal": {
-                "AWS": "arn:aws:iam::941794040565:role/nwVerapi-qa-us-east-1-lambdaRole"
+                "AWS": "arn:aws:iam::941794040565:role/nwVerapi-qa-us-east-2-lambdaRole"
             },
             "Action": "s3:GetObject",
             "Resource": "arn:aws:s3:::nw-sls-deploy-941794040565-qa/*"

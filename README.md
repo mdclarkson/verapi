@@ -31,13 +31,13 @@ To post files to scan you need to perform this command:
 PS: Because of API Gateway 30 seconds limitation, POST operations are not available for a build which requires important file size.
 
 ```
-curl --header "Content-Type: application/json" -X POST https://qytqx7orfl.execute-api.us-east-1.amazonaws.com/qa/api/nwVerapi/sendFiles -d @resources/test_upload.json
+curl --header "Content-Type: application/json" -X POST https://rh1bknk8wh.execute-api.us-east-2.amazonaws.com/qa/api/nwVerapi/sendFiles -d @resources/test_upload.json
 ```
 
 To get the results you have to perform this command:
 
 ```
-curl --header "Content-Type: application/json" -X GET ttps://qytqx7orfl.execute-api.us-east-1.amazonaws.com/qa/api/nwVerapi/getResults/{appid}
+curl --header "Content-Type: application/json" -X GET https://rh1bknk8wh.execute-api.us-east-2.amazonaws.com/qa/api/nwVerapi/getResults/{appid} 
 ```
 
 
