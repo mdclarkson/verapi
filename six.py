@@ -718,12 +718,10 @@ else:
         raise value
 
 
-print_ = getattr(moves.builtins, "print", None)
-if print_ is None:
+if (print_ := getattr(moves.builtins, "print", None)) is None:
     def print_(*args, **kwargs):
         """The new-style print function for Python 2.4 and 2.5."""
-        fp = kwargs.pop("file", sys.stdout)
-        if fp is None:
+        if (fp := kwargs.pop("file", sys.stdout)) is None:
             return
 
         def write(data):
@@ -739,14 +737,12 @@ if print_ is None:
                 data = data.encode(fp.encoding, errors)
             fp.write(data)
         want_unicode = False
-        sep = kwargs.pop("sep", None)
-        if sep is not None:
+        if (sep := kwargs.pop("sep", None)) is not None:
             if isinstance(sep, unicode):
                 want_unicode = True
             elif not isinstance(sep, str):
                 raise TypeError("sep must be None or a string")
-        end = kwargs.pop("end", None)
-        if end is not None:
+        if (end := kwargs.pop("end", None)) is not None:
             if isinstance(end, unicode):
                 want_unicode = True
             elif not isinstance(end, str):
@@ -813,8 +809,7 @@ def add_metaclass(metaclass):
     """Class decorator for creating a class with a metaclass."""
     def wrapper(cls):
         orig_vars = cls.__dict__.copy()
-        slots = orig_vars.get('__slots__')
-        if slots is not None:
+        if (slots := orig_vars.get('__slots__')) is not None:
             if isinstance(slots, str):
                 slots = [slots]
             for slots_var in slots:

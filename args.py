@@ -90,8 +90,7 @@ class ArgsList(object):
         """Removes given arg (or list thereof) from Args object."""
 
         def _remove(x):
-            found = self.first(x)
-            if found is not None:
+            if (found := self.first(x)) is not None:
                 self._args.pop(found)
 
         if _is_collection(x):
