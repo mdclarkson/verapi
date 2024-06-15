@@ -1,3 +1,5 @@
+import defusedxml.ElementTree
+
 __author__ = "Clyde Fondop"
 #!/usr/local/bin/python
 # title           : Lambda env vars
@@ -24,7 +26,6 @@ from requests_toolbelt import MultipartEncoder, MultipartEncoderMonitor
 import logging
 from os.path import expanduser
 import os, boto3, base64, botocore, json, re, datetime
-import xml.etree.ElementTree as ET
 from base64 import b64decode
 from botocore.exceptions import ClientError
 from datetime import datetime
@@ -200,7 +201,7 @@ class veracodeAPI:
         xml_resp = self.api_submit(api_endpoint, payload={'app_id':appid})
 
         # Open XML response for files
-        root = ET.fromstring(xml_resp.text)
+        root = defusedxml.ElementTree.fromstring(xml_resp.text)
         for child in root:
             if child.attrib['file_name'] in tab_files:
                 all_files_id.append(child.attrib["file_id"])
@@ -275,7 +276,7 @@ def lambda_function_postfiles(event, context):
 
                 r = MyVAPI.begin_prescan({'scan_all_nonfatal_top_level_modules': True, 'autoscan': True,  'app_id': u'{}'.format(MyMLF.appID)})
                 try:
-                    root = ET.fromstring(r.text)
+                    root = defusedxml.ElementTree.fromstring(r.text)
                     if match_string_text("A scan request has already been submitted for this build.", root):
                         MyMLF.response["body"] = "A scan request has already been submitted for this build."
                         MyMLF.response["statusCode"] = 200
@@ -317,7 +318,7 @@ def lambda_function_getresults(event, context):
         results = MyVAPI.get_prescan_results({'app_id':"{}".format(appid)})
 
         #### Check results #####
-        root = ET.fromstring(results.text)
+        root = defusedxml.ElementTree.fromstring(results.text)
         for child in root:
             if  "status" in child.attrib:
 
