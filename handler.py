@@ -162,7 +162,7 @@ class veracodeAPI:
 
         api_endpoint = "uploadfile.do"
         r = requests.post(VERACODE_API_URL + api_endpoint, data=monitor, headers={'Content-Type': encoder.content_type},
-                          auth=(self.credential["username"], self.credential["password"]))
+                          auth=(self.credential["username"], self.credential["password"]), timeout=60)
         return r
 
     # Encode request for Veracode
@@ -182,7 +182,7 @@ class veracodeAPI:
     # Submit information to Veracode
     def api_submit(self, api_endpoint, payload=None, files=None):
         r = requests.post(VERACODE_API_URL + api_endpoint, params=payload, files=files,
-                          auth=(self.credential["username"], self.credential["password"]))
+                          auth=(self.credential["username"], self.credential["password"]), timeout=60)
         return r
 
 
